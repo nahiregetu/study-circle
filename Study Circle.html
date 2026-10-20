@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Study Circle</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#f6f4ee;--card:#fff;--ink:#1d2a24;--mut:#6a766f;--line:#e2ded2;--pri:#1f7a4d;--pri2:#e6f3ec;--acc:#e8a317;--bad:#c0452f}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141a17;--card:#1d2621;--ink:#eaf1ec;--mut:#98a69e;--line:#2c3832;--pri:#4cc084;--pri2:#223a2d;--acc:#f0b83a;--bad:#e8785f}}
+:root[data-theme="dark"]{--bg:#141a17;--card:#1d2621;--ink:#eaf1ec;--mut:#98a69e;--line:#2c3832;--pri:#4cc084;--pri2:#223a2d;--acc:#f0b83a;--bad:#e8785f}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+header{display:flex;align-items:center;gap:10px;padding:14px 18px;max-width:900px;margin:auto}
+header h1{font-size:20px;margin:0;flex:1}header span{color:var(--pri)}
+.pts{background:var(--pri2);color:var(--pri);padding:4px 12px;border-radius:99px;font-weight:600}
+nav{display:flex;gap:6px;overflow-x:auto;padding:0 18px 8px;max-width:900px;margin:auto}
+nav button{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:8px 14px;border-radius:99px;cursor:pointer;white-space:nowrap;font:inherit}
+nav button.on{background:var(--pri);color:#fff;border-color:var(--pri)}
+main{max-width:900px;margin:auto;padding:8px 18px 40px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
+h2{font-size:17px;margin:0 0 10px}.mut{color:var(--mut);font-size:13px}
+.big{font-size:44px;font-weight:700;line-height:1}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.mem{border:1px solid var(--line);border-radius:12px;padding:12px;text-align:center}
+.mem.done{background:var(--pri2);border-color:var(--pri)}
+.av{width:38px;height:38px;border-radius:50%;background:var(--pri);color:#fff;display:inline-grid;place-items:center;font-weight:700;margin-bottom:4px}
+.btn{background:var(--pri);color:#fff;border:0;padding:9px 16px;border-radius:10px;cursor:pointer;font:inherit;font-weight:600}
+.btn.ghost{background:transparent;color:var(--pri);border:1px solid var(--pri)}
+input,select,textarea{font:inherit;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);max-width:100%}
+input[type=text],textarea{flex:1;min-width:140px}
+.bar{height:10px;background:var(--line);border-radius:9px;overflow:hidden}.bar i{display:block;height:100%;background:var(--pri)}
+.task{display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.task.d span{text-decoration:line-through;color:var(--mut)}
+.tag{font-size:12px;background:var(--pri2);color:var(--pri);padding:2px 9px;border-radius:99px}
+.timer{font-size:64px;font-weight:700;text-align:center;font-variant-numeric:tabular-nums;margin:6px 0}
+.lb{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}
+.lb b:first-child{width:24px}.lb .n{flex:1}.me{color:var(--pri);font-weight:700}
+.ans{margin:8px 0 0 12px;padding-left:10px;border-left:3px solid var(--pri2);color:var(--mut)}
+.week{display:flex;gap:6px}.week i{width:26px;height:26px;border-radius:7px;background:var(--line);display:grid;place-items:center;font-size:11px;font-style:normal}
+.week i.on{background:var(--pri);color:#fff}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:10px;opacity:0;transition:.3s;pointer-events:none}
+.toast.s{opacity:1}
+</style></head><body>
+<header><h1>Study <span>Circle</span></h1><div class="pts" id="pts"></div></header>
+<nav id="nav"></nav>
+<main id="v"></main>
+<div class="toast" id="t"></div>
+<script>
+var KEY="studycircle-v1";
+var DEF={tab:"squad",pts:0,done:false,streak:6,best:9,
+ members:[{n:"You",d:false,s:"Addis Ababa"},{n:"Selam",d:true,s:"Entoto Prep"},{n:"Abel",d:true,s:"Bahir Dar"},{n:"Hiwot",d:false,s:"Hawassa"},{n:"Dawit",d:true,s:"Mekelle"}],
+ tasks:[{t:"Solve 15 physics questions (Kinematics)",d:false},{t:"Revise Chemistry Unit 3",d:false},{t:"Maths: 10 calculus problems",d:true}],
+ posts:[{q:"How do I find the derivative of x·sin(x)?",by:"Meron",sub:"Maths",a:[{by:"Abel",t:"Use the product rule: (x)'·sin x + x·(sin x)' = sin x + x cos x."}]},
+ {q:"Why does a heavier object not fall faster in a vacuum?",by:"Yonas",sub:"Physics",a:[]}],
+ lib:[["2015 National Exam: Physics",12,"Physics","Past exam"],["Model Exam: Chemistry Set 2",12,"Chemistry","Model exam"],["Mathematics Unit 4 Worksheet",11,"Maths","Worksheet"],["Biology Cell Division Questions",10,"Biology","Practice"],["English Grammar Drill",9,"English","Practice"],["2014 National Exam: Maths",12,"Maths","Past exam"],["Chemistry Unit 2 Practice",11,"Chemistry","Practice"],["Physics Waves Worksheet",10,"Physics","Worksheet"]],
+ board:[["Entoto Eagles",1240],["Abay Scholars",1105],["Lalibela Learners",980],["Your Squad: Blue Nile",860],["Rift Valley Rockets",730]]};
+var S;try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
+if(!S||!S.members)S=JSON.parse(JSON.stringify(DEF));
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function $(i){return document.getElementById(i)}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function toast(m){var t=$("t");t.textContent=m;t.className="toast s";setTimeout(function(){t.className="toast"},1800)}
+function add(n){S.pts+=n;save()}
+var TABS=[["squad","🔥 Squad"],["plan","🗓️ Planner"],["room","⏱️ Study room"],["help","🤝 Community"],["lib","📚 Library"],["rank","🏆 Leaderboard"]];
+var fl={g:"all",s:"all"},tm={sec:1500,run:null,left:1500};
+function nav(){$("nav").innerHTML=TABS.map(function(x){return'<button class="'+(S.tab==x[0]?"on":"")+'" onclick="go(\''+x[0]+'\')">'+x[1]+'</button>'}).join("")}
+function go(t){S.tab=t;save();render()}
+function doneCount(){return S.members.filter(function(m){return m.d}).length}
+function squad(){
+ var c=doneCount(),need=4,ok=c>=need;
+ var h='<div class="card"><div class="row"><div><div class="mut">Squad: Blue Nile</div><div class="big">🔥 '+S.streak+'</div><div class="mut">day streak · best '+S.best+'</div></div><div style="flex:1"></div><div style="text-align:right"><b style="font-size:22px">'+c+' / '+S.members.length+'</b><div class="mut">checked in today<br>need '+need+' to keep the streak</div></div></div>';
+ h+='<div class="bar" style="margin:12px 0"><i style="width:'+Math.min(100,c/need*100)+'%"></i></div>';
+ h+='<div>'+(ok?"✅ Streak is safe for today. Great teamwork!":"⏳ "+(need-c)+" more check-in"+(need-c>1?"s":"")+" needed to keep the streak."+(S.done?"":" Your squad is waiting on you!"))+'</div></div>';
+ h+='<div class="card"><h2>Today\u2019s check-ins</h2><div class="grid">'+S.members.map(function(m,i){return'<div class="mem '+(m.d?"done":"")+'"><div class="av">'+m.n[0]+'</div><div><b>'+m.n+'</b></div><div class="mut">'+m.s+'</div><div>'+(m.d?"✅ Done":(i?'<button class="btn ghost" style="padding:3px 10px" onclick="nudge(\''+m.n+'\')">👋 Nudge</button>':"…"))+'</div></div>'}).join("")+'</div>';
+ h+='<div class="row" style="margin-top:14px">'+(S.done?'<span class="tag">You checked in today (+20 pts)</span>':'<button class="btn" onclick="checkin()">I finished my daily goal ✔</button>')+'<button class="btn ghost" onclick="sim()">Demo: teammate checks in</button><button class="btn ghost" onclick="reset()">Reset demo</button></div></div>';
+ h+='<div class="card"><h2>This week</h2><div class="week">'+["M","T","W","T","F","S","S"].map(function(d,i){return'<i class="'+(i<5?"on":"")+'">'+d+'</i>'}).join("")+'</div></div>';
+ return h}
+function checkin(){var done=S.tasks.filter(function(t){return t.d}).length;S.members[0].d=true;S.done=true;add(20);if(doneCount()==4)S.streak++,S.best=Math.max(S.best,S.streak);save();toast("Checked in! +20 points");render()}
+function sim(){var m=S.members.filter(function(x){return!x.d})[0];if(!m){toast("Everyone has checked in");return}m.d=true;if(doneCount()==4){S.streak++;S.best=Math.max(S.best,S.streak);toast(m.n+" checked in. Streak extended! 🔥")}else toast(m.n+" checked in");save();render()}
+function nudge(n){toast(n+", you\u2019re behind! Time to study 📚")}
+function reset(){S=JSON.parse(JSON.stringify(DEF));save();render()}
+function plan(){
+ var d=S.tasks.filter(function(t){return t.d}).length,p=S.tasks.length?d/S.tasks.length*100:0;
+ var h='<div class="card"><h2>Daily goals</h2><div class="bar"><i style="width:'+p+'%"></i></div><div class="mut" style="margin:6px 0 10px">'+d+' of '+S.tasks.length+' done</div>';
+ h+=S.tasks.map(function(t,i){return'<div class="task '+(t.d?"d":"")+'"><input type="checkbox" '+(t.d?"checked":"")+' onchange="tog('+i+')"><span style="flex:1">'+esc(t.t)+'</span><button class="btn ghost" onclick="del('+i+')">✕</button></div>'}).join("");
+ h+='<div class="row" style="margin-top:12px"><input type="text" id="nt" placeholder="e.g. Solve 15 biology questions" onkeydown="if(event.key===\'Enter\')addT()"><button class="btn" onclick="addT()">Add goal</button></div></div>';
+ return h}
+function tog(i){S.tasks[i].d=!S.tasks[i].d;if(S.tasks[i].d){add(5);toast("+5 points")}save();render()}
+function del(i){S.tasks.splice(i,1);save();render()}
+function addT(){var v=$("nt").value.trim();if(!v)return;S.tasks.push({t:v,d:false});save();render()}
+function fmt(s){return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0")}
+function room(){
+ return'<div class="card"><h2>Focus session: Physics &amp; Maths</h2><div class="mut">Everyone studies on their own at the same time. No video needed.</div><div class="timer" id="tm">'+fmt(tm.left)+'</div><div class="row" style="justify-content:center"><button class="btn" id="tb" onclick="tt()">'+(tm.run?"Pause":"Start")+'</button><button class="btn ghost" onclick="tr()">Reset</button><select onchange="tl(this.value)"><option value="1500">25 min</option><option value="2700">45 min</option><option value="3600">60 min</option></select></div></div>'+
+ '<div class="card"><h2>📹 Squad meetup</h2><div class="mut">Once in a while, catch up face to face: how is studying going? Meet students from other schools too.</div><div class="row" style="margin-top:10px"><b>Sat, 4:00 PM</b><span class="tag">Blue Nile squad</span><button class="btn" onclick="toast(\'Video link opens here (Jitsi or Google Meet)\')">Join video call</button></div></div><div class="card"><h2>In the room now</h2><div class="row">'+S.members.slice(1,4).map(function(m){return'<span class="tag">● '+m.n+' · '+m.s+'</span>'}).join("")+'<span class="tag">● You</span></div></div>'}
+function tl(v){tm.sec=+v;tm.left=+v;tp();render()}
+function tp(){clearInterval(tm.run);tm.run=null}
+function tt(){if(tm.run){tp();render();return}tm.run=setInterval(function(){tm.left--;if(tm.left<=0){tp();tm.left=tm.sec;add(15);toast("Session complete! +15 points");render();return}var e=$("tm");if(e)e.textContent=fmt(tm.left)},1000);render()}
+function tr(){tp();tm.left=tm.sec;render()}
+function help(){
+ var h='<div class="card"><h2>Ask the community</h2><div class="row"><select id="ps"><option>Maths</option><option>Physics</option><option>Chemistry</option><option>Biology</option><option>English</option></select><input type="text" id="pq" placeholder="What are you stuck on?"><button class="btn" onclick="ask()">Post</button></div></div>';
+ h+=S.posts.map(function(p,i){return'<div class="card"><span class="tag">'+p.sub+'</span> <b>'+esc(p.q)+'</b><div class="mut">asked by '+esc(p.by)+'</div>'+p.a.map(function(a){return'<div class="ans"><b>'+esc(a.by)+':</b> '+esc(a.t)+'</div>'}).join("")+'<div class="row" style="margin-top:10px"><input type="text" id="r'+i+'" placeholder="Write an answer"><button class="btn ghost" onclick="rep('+i+')">Reply (+10)</button></div></div>'}).join("");
+ return h}
+function ask(){var q=$("pq").value.trim();if(!q)return;S.posts.unshift({q:q,by:"You",sub:$("ps").value,a:[]});add(2);save();render()}
+function rep(i){var v=$("r"+i).value.trim();if(!v)return;S.posts[i].a.push({by:"You",t:v});add(10);toast("Thanks for helping! +10 points");save();render()}
+function lib(){
+ var gs=["all",9,10,11,12],ss=["all","Maths","Physics","Chemistry","Biology","English"];
+ var items=S.lib.filter(function(x){return(fl.g=="all"||x[1]==fl.g)&&(fl.s=="all"||x[2]==fl.s)});
+ return'<div class="card"><h2>Exam-prep library</h2><div class="mut" style="margin-bottom:8px">Real worksheets, module exams and test exams shared by students from schools across Ethiopia.</div><div class="row"><select onchange="fl.g=this.value;render()">'+gs.map(function(g){return'<option value="'+g+'" '+(fl.g==g?"selected":"")+'>'+(g=="all"?"All grades":"Grade "+g)+'</option>'}).join("")+'</select><select onchange="fl.s=this.value;render()">'+ss.map(function(s){return'<option value="'+s+'" '+(fl.s==s?"selected":"")+'>'+(s=="all"?"All subjects":s)+'</option>'}).join("")+'</select></div></div>'+
+ (items.length?items.map(function(x){return'<div class="card row"><div style="flex:1"><b>'+esc(x[0])+'</b><div class="mut">Grade '+x[1]+' · '+x[2]+'</div></div><span class="tag">'+x[3]+'</span></div>'}).join(""):'<div class="card mut">Nothing here yet. Be the first to contribute!</div>')+
+ '<div class="card"><h2>Contribute a resource</h2><div class="row"><input type="text" id="lt" placeholder="Title"><button class="btn" onclick="contrib()">Share (+15)</button></div></div>'}
+function contrib(){var v=$("lt").value.trim();if(!v)return;S.lib.unshift([v,fl.g=="all"?12:+fl.g,fl.s=="all"?"Maths":fl.s,"Shared"]);add(15);toast("Resource shared! +15 points");save();render()}
+function rank(){
+ var b=S.board.map(function(x){return x.slice()});b[3][1]=860+S.pts;b.sort(function(a,c){return c[1]-a[1]});
+ return'<div class="card"><h2>Squad leaderboard</h2>'+b.map(function(x,i){return'<div class="lb"><b>'+(i+1)+'</b><span class="n '+(x[0].indexOf("Your")==0?"me":"")+'">'+x[0]+'</span><b>'+x[1]+' pts</b></div>'}).join("")+'<div class="mut" style="margin-top:10px">Points come from check-ins, goals, study sessions, helping others and sharing resources.</div></div>'}
+function render(){nav();$("pts").textContent="⭐ "+S.pts+" pts";var f={squad:squad,plan:plan,room:room,help:help,lib:lib,rank:rank};$("v").innerHTML=f[S.tab]()}
+render();
+</script></body></html>
